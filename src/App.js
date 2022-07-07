@@ -4,17 +4,17 @@ import { yupResolver } from "@hookform/resolvers/yup";
 
 function App() {
   const yupSchema = yup.object({
-    // name: yup
-    //   .string()
-    //   .required("Le champ est obligatoire")
-    //   .min(2, "Trop court !")
-    //   .max(5, "Trop long !")
-    //   .test("isYes", "Vous n'avez pas de chance", async () => {
-    //     const response = await fetch("https://yesno.wtf/api");
-    //     const result = await response.json();
-    //     console.log(result);
-    //     return result.answer === "yes";
-    //   }),
+    name: yup
+      .string()
+      .required("Le champ est obligatoire")
+      .min(2, "Trop court !")
+      .max(5, "Trop long !"),
+    // .test("isYes", "Vous n'avez pas de chance", async () => {
+    //   const response = await fetch("https://yesno.wtf/api");
+    //   const result = await response.json();
+    //   console.log(result);
+    //   return result.answer === "yes";
+    // }),
     // age: yup
     //   .number()
     //   .typeError("Veuillez rentrer un nombre")
@@ -53,35 +53,41 @@ function App() {
     reset,
     setError,
     clearErrors,
+    setFocus,
+    trigger,
     formState: { errors, isSubmitting, submitCount },
   } = useForm({
     defaultValues,
     resolver: yupResolver(yupSchema),
-    mode: "onSubmit",
+    criteriaMode: "all",
+    mode: "onChange",
   });
 
   // watch("name");
 
+  console.log(errors);
+
   async function submit(values) {
     try {
-      clearErrors();
-      const response = await fetch("https://restapi.fr/api/testr", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      if (response.ok) {
-        throw new Error("le nom n'est pas correct");
-        // const newUser = await response.json();
-        // reset(defaultValues);
-        // console.log(newUser);
-      } else {
-        console.log("erreur");
-      }
+      // clearErrors();
+      // const response = await fetch("https://restapi.fr/api/testr", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(values),
+      // });
+      // if (response.ok) {
+      throw new Error("le nom n'est pas correct");
+      // const newUser = await response.json();
+      // reset(defaultValues);
+      // console.log(newUser);
+      // } else {
+      //   console.log("erreur");
+      // }
     } catch (e) {
-      setError("name", { type: "wrongName", message: e.message });
+      setError("globalError", { type: "wrongName", message: e.message });
+      setFocus("age");
       console.log("erreur");
     }
   }
@@ -96,8 +102,22 @@ function App() {
           <label className="mb-5" htmlFor="name">
             Nom
           </label>
-          <input {...register("name")} id="name" type="text" />
-          {errors?.name && <p>{errors.name.message}</p>}
+          <input
+            {...register("name", {
+              onBlur() {
+                trigger("age");
+              },
+            })}
+            id="name"
+            type="text"
+          />
+          {errors?.name && (
+            <ul>
+              {Object.keys(errors.name.types).map((k) => (
+                <li key={k}>{errors.name.types[k]}</li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="d-flex flex-column mb-20">
           <label className="mb-5" htmlFor="age">
