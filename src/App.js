@@ -33,26 +33,57 @@ function App() {
     //   ),
   });
 
+  const defaultValues = {
+    name: "",
+    gender: "man",
+    age: "",
+    password: "",
+    confirmPassword: "",
+    other: {
+      sign: "",
+      happy: false,
+    },
+  };
+
   const {
     register,
     handleSubmit,
     getValues,
     watch,
-    formState: { errors },
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting, submitCount },
   } = useForm({
-    defaultValues: {
-      name: "",
-      gender: "man",
-      other: ["", false],
-    },
+    defaultValues,
     resolver: yupResolver(yupSchema),
     mode: "onSubmit",
   });
 
   // watch("name");
 
-  function submit(values) {
-    console.log(values);
+  async function submit(values) {
+    try {
+      clearErrors();
+      const response = await fetch("https://restapi.fr/api/testr", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+      if (response.ok) {
+        throw new Error("le nom n'est pas correct");
+        // const newUser = await response.json();
+        // reset(defaultValues);
+        // console.log(newUser);
+      } else {
+        console.log("erreur");
+      }
+    } catch (e) {
+      setError("name", { type: "wrongName", message: e.message });
+      console.log("erreur");
+    }
   }
 
   return (
@@ -96,14 +127,14 @@ function App() {
         <div className="d-flex flex-column mb-20">
           <label className="mb-5" htmlFor="happy">
             Content ?
-            <input {...register("other[0]")} id="happy" type="checkbox" />
+            <input {...register("other.happy")} id="happy" type="checkbox" />
           </label>
         </div>
         <div className="d-flex flex-column mb-20">
           <label className="mb-5" htmlFor="sign">
             Signe
           </label>
-          <select {...register("other[1]")} id="sign">
+          <select {...register("other.sign")} id="sign">
             <option value="" disabled>
               Choisissez un signe
             </option>
@@ -129,7 +160,10 @@ function App() {
           />
           {errors?.confirmPassword && <p>{errors.confirmPassword.message}</p>}
         </div>
-        <button className="btn btn-primary">Save</button>
+        {errors.globalError && <p>{errors.globalError.message}</p>}
+        <button disabled={isSubmitting} className="btn btn-primary">
+          Save ({submitCount})
+        </button>
       </form>
     </div>
   );
